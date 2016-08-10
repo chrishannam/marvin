@@ -1,0 +1,12 @@
+*.pyc
+/rtmbot.conf
+/plugins/**
+/build/**
+*.log
+env
+.tox
+*.un~
+0/
+tests/.cache
+.coverage
+.cache
