@@ -32,7 +32,7 @@ def process_message(data):
     if not text or data.get('subtype', '') == 'channel_join':
         return
 
-    if 'whats the mood?' in text:
+    if 'what's the mood?' in text:
         outputs.append([data['channel'], str(sentiment_results)])
         return
 
