@@ -16,15 +16,13 @@ Very positive
 import Algorithmia
 import yaml
 import json
+import os
 import argparse
 from tabulate import tabulate
 from slackclient import SlackClient
 from datetime import datetime, date, time, timedelta
 
 CONFIG = yaml.load(file('python-rtmbot-master/rtmbot.conf', 'r'))
-
-ALGORITHMIA_CLIENT = Algorithmia.client(CONFIG["ALGORITHMIA_KEY"])
-ALGORITHM = ALGORITHMIA_CLIENT.algo('nlp/SentimentAnalysis/0.1.2')
 
 
 def list_channels(slack_client):
@@ -43,7 +41,7 @@ def list_channels(slack_client):
     return channels
 
 
-def run(slack_client, channel):
+def run(slack_client, channel, algorithm):
 
     midnight = datetime.combine(date.today(), time.min)
     yesterday_midnight = midnight - timedelta(days=1)
@@ -77,13 +75,18 @@ def run(slack_client, channel):
            message.get("subtype", "") == "channel_join":
             continue
 
-        results = ALGORITHM.pipe(message['text'])
+        results = algorithm.pipe(text)
 
         if not results.result:
             continue
         sentiment_results[MAPPING[results.result]] += 1
 
-    print sentiment_results
+    headings = sentiment_results.keys()
+    values = sentiment_results.values()
+
+    print tabulate([values], headers=headings)
+
+    return sentiment_results
 
 
 if __name__ == "__main__":
@@ -98,8 +101,20 @@ if __name__ == "__main__":
         '--channel-name', help='Channel to evaluate sentiment from.')
     args = parser.parse_args()
 
-    token = CONFIG['SLACK_TOKEN']
-    slack_client = SlackClient(token)
+    slack_token = os.environ.get("SLACK_TOKEN", None)
+
+    if not slack_token:
+        slack_token = CONFIG['SLACK_TOKEN']
+
+    slack_client = SlackClient(slack_token)
+
+    algorithmia_token = os.environ.get("ALGORITHMIA_TOKEN", None)
+
+    if not algorithmia_token:
+        algorithmia_token = CONFIG['ALGORITHMIA_KEY']
+
+    algorithmia_client = Algorithmia.client(algorithmia_token)
+    algorithm = algorithmia_client.algo('nlp/SentimentAnalysis/0.1.2')
 
     if args.list_channels:
         channels = list_channels(slack_client)
@@ -112,4 +127,4 @@ if __name__ == "__main__":
         print tabulate(display, headers=["Channel Name", "Slack ID"])
         exit()
 
-    run(slack_client, args.channel_name)
+    run(slack_client, args.channel_name, algorithm)
