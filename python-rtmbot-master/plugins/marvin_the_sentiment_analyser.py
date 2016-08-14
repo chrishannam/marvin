@@ -21,7 +21,18 @@ sentiment_results = {
     "negative": 0,
     "neutral": 0,
     "positive": 0,
+    "very positive": 0
+}
+
+TOTAL = 0
+
+sentiment_averages = {
+    "very negative": 0,
+    "negative": 0,
+    "neutral": 0,
+    "positive": 0,
     "very positive": 0,
+    "total": 0,
 }
 
 
@@ -33,12 +44,31 @@ def process_message(data):
         return
 
     if "what's the mood?" in text:
-        outputs.append([data["channel"], str(sentiment_results)])
+
+        reply = ""
+
+        for k, v in sentiment_averages.iteritems():
+            if k == "total":
+                continue
+            reply += "{}: {}%\n ".format(k.capitalize(), v)
+
+        outputs.append([data["channel"], str(reply)])
+
         return
 
     results = ALGORITHM.pipe(text)
 
     sentiment_results[MAPPING[results.result]] += 1
+
+    # increment counter so we can work out averages
+    sentiment_averages["total"] += 1
+
+    for k, v in sentiment_results.iteritems():
+        if k == "total":
+            continue
+        if v == 0:
+            continue
+        sentiment_averages[k] = round(float(v) / float(sentiment_averages["total"]) * 100, 2)
 
     if results.result == 0:
         outputs.append([data["channel"], "Easy there, negative Nancy!"])
