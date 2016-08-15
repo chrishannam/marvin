@@ -24,8 +24,6 @@ sentiment_results = {
     "very positive": 0
 }
 
-TOTAL = 0
-
 sentiment_averages = {
     "very negative": 0,
     "negative": 0,
@@ -68,9 +66,10 @@ def process_message(data):
             continue
         if v == 0:
             continue
-        sentiment_averages[k] = round(float(v) / float(sentiment_averages["total"]) * 100, 2)
+        sentiment_averages[k] = round(
+            float(v) / float(sentiment_averages["total"]) * 100, 2)
 
     if results.result == 0:
         outputs.append([data["channel"], "Easy there, negative Nancy!"])
 
-    print "Comment was {}".format(MAPPING[results.result])
+    print 'Comment "{}" was {}'.format(text, MAPPING[results.result])
