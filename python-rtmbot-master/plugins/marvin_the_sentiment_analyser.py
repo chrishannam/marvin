@@ -72,4 +72,5 @@ def process_message(data):
     if results.result == 0:
         outputs.append([data["channel"], "Easy there, negative Nancy!"])
 
+    # print to the console what just happened
     print 'Comment "{}" was {}'.format(text, MAPPING[results.result])
