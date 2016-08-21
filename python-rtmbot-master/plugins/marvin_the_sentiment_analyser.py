@@ -41,7 +41,10 @@ def process_message(data):
     if not text or data.get("subtype", "") == "channel_join":
         return
 
-    if "what's the mood?" in text:
+    # remove any odd encoding
+    text = text.encode('utf-8')
+
+    if "current mood?" in text:
 
         reply = ""
 
