@@ -22,7 +22,7 @@ from tabulate import tabulate
 from slackclient import SlackClient
 from datetime import datetime, date, time, timedelta
 
-CONFIG = yaml.load(file('python-rtmbot-master/rtmbot.conf', 'r'))
+CONFIG = yaml.load(file('../python-rtmbot-master/rtmbot.conf', 'r'))
 
 
 def list_channels(slack_client):
@@ -50,20 +50,17 @@ def run(slack_client, channel, algorithm):
     history = slack_client.api_call("channels.history", channel=channel, inclusive=1,count=50)
     history = json.loads(history)
 
-    MAPPING = {
-        0: 'very negative',
-        1: 'negative',
-        2: 'neutral',
-        3: 'positive',
-        4: 'very positive'
+    sentiment_averages = {
+        'negative': 0,
+        'neutral': 0,
+        'positive': 0
     }
 
     sentiment_results = {
-        'very negative': 0,
-        'negative': 0,
-        'neutral': 0,
-        'positive': 0,
-        'very positive': 0,
+        "negative": 0,
+        "neutral": 0,
+        "positive": 0,
+        'total': 0,
     }
 
     for message in history['messages']:
@@ -79,14 +76,38 @@ def run(slack_client, channel, algorithm):
 
         if not results.result:
             continue
-        sentiment_results[MAPPING[results.result]] += 1
 
-    headings = sentiment_results.keys()
-    values = sentiment_results.values()
+        results = results.result[0]
+
+        verdict = "neutral"
+        compound_result = results.get('compound', 0)
+
+        if compound_result == 0:
+            sentiment_results["neutral"] += 1
+        elif compound_result > 0:
+            sentiment_results["positive"] += 1
+            verdict = "positive"
+        elif compound_result < 0:
+            sentiment_results["negative"] += 1
+            verdict = "negative"
+
+        # increment counter so we can work out averages
+        sentiment_results["total"] += 1
+
+        for k, v in sentiment_results.iteritems():
+            if k == "total":
+                continue
+            if v == 0:
+                continue
+            sentiment_averages[k] = round(
+                float(v) / float(sentiment_results["total"]) * 100, 2)
+
+    headings = ["%" + x for x in sentiment_averages.keys()]
+    values = sentiment_averages.values()
 
     print tabulate([values], headers=headings)
 
-    return sentiment_results
+    return sentiment_averages
 
 
 if __name__ == "__main__":
@@ -114,7 +135,8 @@ if __name__ == "__main__":
         algorithmia_token = CONFIG['ALGORITHMIA_KEY']
 
     algorithmia_client = Algorithmia.client(algorithmia_token)
-    algorithm = algorithmia_client.algo('nlp/SentimentAnalysis/0.1.2')
+    #algorithm = algorithmia_client.algo('nlp/SentimentAnalysis/0.1.2')
+    algorithm = algorithmia_client.algo('nlp/SocialSentimentAnalysis/0.1.3')
 
     if args.list_channels:
         channels = list_channels(slack_client)

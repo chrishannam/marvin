@@ -1,38 +1,46 @@
 import Algorithmia
 import yaml
+import traceback
+
 
 CONFIG = yaml.load(file("rtmbot.conf", "r"))
 
 ALGORITHMIA_CLIENT = Algorithmia.client(CONFIG["ALGORITHMIA_KEY"])
-ALGORITHM = ALGORITHMIA_CLIENT.algo("nlp/SentimentAnalysis/0.1.2")
+#ALGORITHM = ALGORITHMIA_CLIENT.algo("nlp/SentimentAnalysis/0.1.2")
+ALGORITHM = ALGORITHMIA_CLIENT.algo('nlp/SocialSentimentAnalysis/0.1.3')
 
 outputs = []
 
-MAPPING = {
-    0: "very negative",
-    1: "negative",
-    2: "neutral",
-    3: "positive",
-    4: "very positive"
-}
-
 sentiment_results = {
-    "very negative": 0,
     "negative": 0,
     "neutral": 0,
     "positive": 0,
-    "very positive": 0
-}
-
-sentiment_averages = {
-    "very negative": 0,
-    "negative": 0,
-    "neutral": 0,
-    "positive": 0,
-    "very positive": 0,
     "total": 0,
 }
 
+sentiment_averages = {
+    "negative": 0,
+    "neutral": 0,
+    "positive": 0
+}
+
+
+def display_current_mood(channel):
+    reply = ""
+
+    # something has gone wrong if we don't have a channel do nothing
+    if not channel:
+        return
+
+    # loop over our stats and send them in the
+    # best layout we can.
+    for k, v in sentiment_averages.iteritems():
+        if k == "total":
+            continue
+        reply += "{}: {}%\n ".format(k.capitalize(), v)
+
+    outputs.append([channel, str(reply)])
+    return
 
 def process_message(data):
 
@@ -45,35 +53,52 @@ def process_message(data):
     text = text.encode('utf-8')
 
     if "current mood?" in text:
+        return display_current_mood(data.get("channel", None))
 
-        reply = ""
-
-        for k, v in sentiment_averages.iteritems():
-            if k == "total":
-                continue
-            reply += "{}: {}%\n ".format(k.capitalize(), v)
-
-        outputs.append([data["channel"], str(reply)])
-
+    # don't log the current mood reply!
+    if text.startswith('Positive:'):
         return
 
-    results = ALGORITHM.pipe(text)
+    try:
+        sentence = {
+            "sentence": text
+        }
 
-    sentiment_results[MAPPING[results.result]] += 1
+        result = ALGORITHM.pipe(sentence)
 
-    # increment counter so we can work out averages
-    sentiment_averages["total"] += 1
+        results = result.result[0]
 
-    for k, v in sentiment_results.iteritems():
-        if k == "total":
-            continue
-        if v == 0:
-            continue
-        sentiment_averages[k] = round(
-            float(v) / float(sentiment_averages["total"]) * 100, 2)
+        verdict = "neutral"
+        compound_result = results.get('compound', 0)
 
-    if results.result == 0:
-        outputs.append([data["channel"], "Easy there, negative Nancy!"])
+        if compound_result == 0:
+            sentiment_results["neutral"] += 1
+        elif compound_result > 0:
+            sentiment_results["positive"] += 1
+            verdict = "positive"
+        elif compound_result < 0:
+            sentiment_results["negative"] += 1
+            verdict = "negative"
 
-    # print to the console what just happened
-    print 'Comment "{}" was {}'.format(text, MAPPING[results.result])
+        # increment counter so we can work out averages
+        sentiment_averages["total"] += 1
+
+        for k, v in sentiment_results.iteritems():
+            if k == "total":
+                continue
+            if v == 0:
+                continue
+            sentiment_averages[k] = round(
+                float(v) / float(sentiment_averages["total"]) * 100, 2)
+
+        if compound_result < -0.75:
+            outputs.append([data["channel"], "Easy there, negative Nancy!"])
+
+        # print to the console what just happened
+        print 'Comment "{}" was {}, compound result {}'.format(text, verdict, compound_result)
+
+    except Exception as exception:
+        # a few things can go wrong but the important thing is keep going
+        # print the error and then move on
+        print "Something went wrong processing the text: {}".format(text)
+        print traceback.format_exc(exception)

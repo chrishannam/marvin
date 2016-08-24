@@ -6,7 +6,11 @@ To track the mood of a Slack channel either in real time or historically. Using 
 each comment is rated for it's general tone or sentiment.
 
 # Setup
+```
+virtualenv .
+source bin/activate
 
+```
 
 # Usage
 Marvin uses the algorithm https://algorithmia.com/algorithms/nlp/SentimentAnalysis to analyse a message in the Slack channel.
