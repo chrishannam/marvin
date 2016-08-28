@@ -22,7 +22,7 @@ from tabulate import tabulate
 from slackclient import SlackClient
 from datetime import datetime, date, time, timedelta
 
-CONFIG = yaml.load(file('../python-rtmbot-master/rtmbot.conf', 'r'))
+CONFIG = yaml.load(file('python-rtmbot-master/rtmbot.conf', 'r'))
 
 
 def list_channels(slack_client):
