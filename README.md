@@ -13,16 +13,14 @@ source bin/activate
 ```
 
 # Usage
-Marvin uses the algorithm https://algorithmia.com/algorithms/nlp/SentimentAnalysis to analyse a message in the Slack channel.
+Marvin uses the algorithm https://algorithmia.com/algorithms/nlp/SocialSentimentAnalysis to analyse a message in the Slack channel.
 The results from the analysis are in the form of:
 
-* Very Negative
 * Negative
 * Neutral
 * Postitive
-* Very Positive
 
-For more detail check out the algorithm's page https://algorithmia.com/algorithms/nlp/SentimentAnalysis.
+For more detail check out the algorithm's page https://algorithmia.com/algorithms/nlp/SocialSentimentAnalysis.
 
 # Historical Analysis
 Provided in the historical directory is ascript that will review the last 24 hours of your Slack channel.
