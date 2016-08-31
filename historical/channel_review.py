@@ -5,11 +5,9 @@ and sends the text to Algorithmia to perform sentiment analysis.
 
 This analysis is the displayed giving the average number of the following:
 
-Very negative
 Negative
 Neutral
 Positive
-Very positive
 """
 
 
