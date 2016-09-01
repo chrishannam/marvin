@@ -58,4 +58,25 @@ $ python historical/channel_review.py -c C056STSWB
 
 ## Realtime Slack Channel Monitoring
 
-Inside the ```python-rtmbot-master``` directory is all the code need to run a Slack bot.
+Inside the ```python-rtmbot-master``` directory is all the code need to run a Slack bot. To start the bot:
+
+```
+$ cd python-rtmbot-master
+$ python rtmbot.py
+```
+
+Check your Slack channel and your bot will appear online.
+
+### Bot Commands
+Currently there is only a single command:
+
+```current mood?```
+
+This will display the current averages:
+
+```
+marvin BOT [7:45 PM]
+Positive: 20.0%
+Neutral: 60.0%
+Negative: 20.0%
+```
