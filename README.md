@@ -35,7 +35,7 @@ For more detail check out the algorithm's page https://algorithmia.com/algorithm
 ## Historical Analysis
 Provided in the ```historical``` directory is a script that will review the last 24 hours of your Slack channel.
 
-To run the historical analysis first you need your channel id. Running the following to get a list
+To run the historical analysis first you need your channel id. Running the following to get a list from your checkout directory.
 
 ```
 $ python historical/channel_review.py -l
@@ -55,3 +55,7 @@ $ python historical/channel_review.py -c C056STSWB
 -----------  ----------  -----------
          30          48           22
 ```
+
+## Realtime Slack Channel Monitoring
+
+Inside the ```python-rtmbot-master``` directory is all the code need to run a Slack bot.

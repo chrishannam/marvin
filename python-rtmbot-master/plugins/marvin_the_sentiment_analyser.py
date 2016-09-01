@@ -14,14 +14,14 @@ outputs = []
 sentiment_results = {
     "negative": 0,
     "neutral": 0,
-    "positive": 0,
-    "total": 0,
+    "positive": 0
 }
 
 sentiment_averages = {
     "negative": 0,
     "neutral": 0,
-    "positive": 0
+    "positive": 0,
+    "total": 0,
 }
 
 
