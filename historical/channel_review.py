@@ -117,7 +117,7 @@ if __name__ == "__main__":
     parser.add_argument('-l',
         '--list-channels', help='List available Slack channels.', action="store_true")
     parser.add_argument('-c',
-        '--channel-name', help='Channel to evaluate sentiment from.')
+        '--channel-name', help='Channel to evaluate sentiment from.', required=True)
     args = parser.parse_args()
 
     slack_token = os.environ.get("SLACK_TOKEN", None)
@@ -133,7 +133,6 @@ if __name__ == "__main__":
         algorithmia_token = CONFIG['ALGORITHMIA_KEY']
 
     algorithmia_client = Algorithmia.client(algorithmia_token)
-    #algorithm = algorithmia_client.algo('nlp/SentimentAnalysis/0.1.2')
     algorithm = algorithmia_client.algo('nlp/SocialSentimentAnalysis/0.1.3')
 
     if args.list_channels:
