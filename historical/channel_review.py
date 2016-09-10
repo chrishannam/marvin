@@ -117,7 +117,7 @@ if __name__ == "__main__":
     parser.add_argument('-l',
         '--list-channels', help='List available Slack channels.', action="store_true")
     parser.add_argument('-c',
-        '--channel-name', help='Channel to evaluate sentiment from.', required=True)
+        '--channel-name', help='Channel to evaluate sentiment from.')
     args = parser.parse_args()
 
     slack_token = os.environ.get("SLACK_TOKEN", None)
