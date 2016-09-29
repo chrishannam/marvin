@@ -13,20 +13,26 @@ Positive
 
 import Algorithmia
 import yaml
-import json
 import os
 import argparse
 from tabulate import tabulate
 from slackclient import SlackClient
-from datetime import datetime, date, time, timedelta
+from datetime import date, timedelta
 
-CONFIG = yaml.load(file('python-rtmbot-master/rtmbot.conf', 'r'))
+# Deal with being run either from the root or the historical dir
+
+if os.path.isfile(os.path.join('..', 'python-rtmbot-master', 'rtmbot.conf')):
+    CONFIG_FILE = os.path.join('..', 'python-rtmbot-master', 'rtmbot.conf')
+else:
+    CONFIG_FILE = 'python-rtmbot-master/rtmbot.conf'
+
+CONFIG = yaml.load(file(CONFIG_FILE, 'r'))
 
 
 def list_channels(slack_client):
-    channel_list_raw = slack_client.api_call("channels.list", exclude_archived=1)
 
-    channel_list = json.loads(channel_list_raw)
+    channel_list = slack_client.api_call("channels.list", exclude_archived=1)
+
     channels = {}
 
     for channel in channel_list['channels']:
@@ -41,12 +47,23 @@ def list_channels(slack_client):
 
 def run(slack_client, channel, algorithm):
 
-    midnight = datetime.combine(date.today(), time.min)
-    yesterday_midnight = midnight - timedelta(days=1)
+    # Grab yesterday's history
+    to_timestamp = date.today()
+    from_timestamp = date.today() - timedelta(days=1)
 
     # fetch the history and convert to JSON
-    history = slack_client.api_call("channels.history", channel=channel, inclusive=1,count=50)
-    history = json.loads(history)
+    history = slack_client.api_call(
+        "channels.history",
+        channel=channel,
+        inclusive=1,
+        latest=to_timestamp.strftime('%s'),
+        yesterday_midnight=from_timestamp.strftime('%s'))
+
+    if isinstance(history, dict):
+        if history['ok'] is False:
+            print("Failed to call Slack, error message: {}".format(
+                history.get("error", "No error message.")))
+            exit(1)
 
     sentiment_averages = {
         'negative': 0,
@@ -70,24 +87,21 @@ def run(slack_client, channel, algorithm):
            message.get("subtype", "") == "channel_join":
             continue
 
-        results = algorithm.pipe(text)
+        results = algorithm.pipe(text.encode("utf8"))
 
         if not results.result:
             continue
 
         results = results.result[0]
 
-        verdict = "neutral"
         compound_result = results.get('compound', 0)
 
         if compound_result == 0:
             sentiment_results["neutral"] += 1
         elif compound_result > 0:
             sentiment_results["positive"] += 1
-            verdict = "positive"
         elif compound_result < 0:
             sentiment_results["negative"] += 1
-            verdict = "negative"
 
         # increment counter so we can work out averages
         sentiment_results["total"] += 1
@@ -115,9 +129,14 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument('-l',
-        '--list-channels', help='List available Slack channels.', action="store_true")
+                        '--list-channels',
+                        help='List available Slack channels.',
+                        action="store_true")
+
     parser.add_argument('-c',
-        '--channel-name', help='Channel to evaluate sentiment from.')
+                        '--channel-name',
+                        help='Channel to evaluate sentiment from.')
+
     args = parser.parse_args()
 
     slack_token = os.environ.get("SLACK_TOKEN", None)
