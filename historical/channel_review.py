@@ -47,6 +47,8 @@ def list_channels(slack_client):
 
 def run(slack_client, channel, algorithm):
 
+    channel = 'C03T49SPB'
+
     # Grab yesterday's history
     to_timestamp = date.today()
     from_timestamp = date.today() - timedelta(days=1)
@@ -57,7 +59,7 @@ def run(slack_client, channel, algorithm):
         channel=channel,
         inclusive=1,
         latest=to_timestamp.strftime('%s'),
-        yesterday_midnight=from_timestamp.strftime('%s'))
+        oldest=from_timestamp.strftime('%s'))
 
     if isinstance(history, dict):
         if history['ok'] is False:
@@ -80,7 +82,7 @@ def run(slack_client, channel, algorithm):
 
     for message in history['messages']:
 
-        text = message.get("text")
+        text = message.get("text", False)
 
         # exclude empty or server generated messages
         if not text or\
